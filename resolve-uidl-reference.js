@@ -1,3 +1,4 @@
+// FILE: resolve-uidl-reference.js
 // CORE-COMPTROLLER-LOGIC
 // uIDL Reference Resolution
 //

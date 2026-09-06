@@ -1,0 +1,215 @@
+<!--
+FILE: red-x-break.html
+CORE-COMPTROLLER-LOGIC
+RED X Live-Line Break Surface
+
+One rock.
+One object.
+One movement.
+One function.
+One entrance.
+One exit.
+One actual end.
+
+PURPOSE:
+
+This surface appears only after an X-Hard Break
+has already been declared.
+
+X marks this break.
+
+X IS NOT DEATH.
+
+X IS NOT DELETE.
+
+X IS NOT DESTROY.
+
+X IS A LIVE-LINE SAFETY BREAK.
+
+The affected movement is stopped while identity,
+history, lineage, evidence, transaction context,
+tracking context, and governing state remain intact.
+
+HAZARD:
+
+The originating organ determines the hazard,
+disruption, integrity failure, hostile condition,
+or other governed cause.
+
+This surface does not diagnose the cause.
+
+DD / DOUBLE TAP:
+
+A double tap on this surface declares a request
+to begin the governed return-to-service process.
+
+DD DOES NOT:
+
+- silently reopen the line
+- authorize movement
+- clear evidence
+- delete history
+- destroy state
+- bypass hazard review
+- bypass integrity review
+- assume the original disruption is repaired
+- complete return to service
+
+THIS SURFACE DOES NOT OWN:
+
+- X-Hard Break authority
+- hazard detection
+- hostile detection
+- drone control
+- camera control
+- audio control
+- sync control
+- permission
+- authority
+- boundary authorization
+- return-to-service authorization
+- reset completion
+- receipts
+- Secretary authority
+- Octopus movement
+- Pepper signaling
+- broadcast control
+- swarm control
+- authority takeover
+
+BLEED RULE:
+
+The surface may emit only its declared DD reset request.
+It may not mutate another organ or inherit its authority.
+
+BLAST RULE:
+
+The surface applies only to the break state presented
+to it and does not stop unrelated continuity.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>CyberCrowd | HAZARD DETECTED</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    #redXBreakSurface {
+      width: 100%;
+      height: 100%;
+
+      display: grid;
+      place-items: center;
+
+      cursor: pointer;
+      outline: none;
+    }
+
+    #redX {
+      margin: 0;
+
+      color: #ff0000;
+
+      font-size: min(72vw, 72vh);
+      font-weight: 900;
+      line-height: 0.8;
+
+      text-align: center;
+
+      text-shadow:
+        0 0 12px #ff0000,
+        0 0 30px #ff0000,
+        0 0 60px #990000;
+    }
+
+    #breakState {
+      position: absolute;
+
+      left: 50%;
+      bottom: 7%;
+
+      transform: translateX(-50%);
+
+      margin: 0;
+
+      color: #ff0000;
+
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.6;
+      letter-spacing: 0.18em;
+
+      text-align: center;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+  <main
+    id="redXBreakSurface"
+    role="button"
+    tabindex="0"
+    aria-label="Hazard detected. Live-line break deployed. Double tap to request return to service."
+  >
+    <div id="redX" aria-hidden="true">X</div>
+
+    <p id="breakState">
+      HAZARD DETECTED<br>
+      MARKS THIS BREAK
+    </p>
+  </main>
+
+  <script>
+    const redXBreakSurface =
+      document.getElementById("redXBreakSurface");
+
+    function declareDoubleTapResetRequest() {
+      window.dispatchEvent(
+        new CustomEvent(
+          "cybercrowd:dd-reset-request",
+          {
+            detail: {
+              signal: "DD_RESET_REQUEST",
+              source: "RED_X_BREAK_SURFACE"
+            }
+          }
+        )
+      );
+    }
+
+    redXBreakSurface.addEventListener(
+      "dblclick",
+      declareDoubleTapResetRequest
+    );
+  </script>
+</body>
+</html>

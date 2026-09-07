@@ -12,23 +12,44 @@
 //
 // PURPOSE:
 //
-// Determine whether one active X-Hard Break
+// Determine whether one declared recovery hold
 // is eligible for governed return-to-service.
 //
-// It answers only:
+// This file answers only:
 //
-// "Has this declared break completed the
-// required recovery review so Comptroller
-// may consider RESET?"
+// "Has this declared held state completed the
+// required recovery review so it may be
+// considered for return to service?"
 //
 // RETURN-TO-SERVICE REQUIRES:
 //
-// - an active X-Hard Break
+// - an active declared recovery hold
 // - a governed DD_RESET_REQUEST
-// - the originating break condition cleared
+// - the originating failure condition cleared
 // - recovery review passed
 //
 // IMPORTANT:
+//
+// HARD X IS NOT REQUIRED.
+//
+// Hard X belongs to the separate VR gesture
+// safety path.
+//
+// General Turnstile recovery must not depend
+// on VR gesture state.
+//
+// A recovery hold may belong to:
+//
+// - POINT
+// - COMPONENT
+// - BROADCAST
+//
+// This resolver does not determine which scope
+// produced the hold.
+//
+// POINT != COMPONENT
+//
+// COMPONENT != BROADCAST
 //
 // DD is a request.
 //
@@ -36,38 +57,41 @@
 //
 // Return-to-service approval is not reset.
 //
-// Return-to-service approval does not reopen the line.
+// Return-to-service approval does not reconnect.
 //
-// This resolver produces only the approval state
-// consumed later by the Comptroller crossing decision.
+// Return-to-service approval does not reopen
+// the affected lane, link, component, or field.
 //
-// The Comptroller crossing decision must still
-// evaluate the ordinary governed crossing conditions.
+// Return-to-service approval does not authorize
+// another organ's movement.
 //
-// X MARKS THIS BREAK.
+// This resolver produces only:
 //
-// RESET != ERASE HISTORY
-//
-// DELETE != DESTROY
+// returnToServiceApproved
 //
 // Owns only:
 //
-// - return-to-service eligibility recognition
-// - return-to-service approval decision
+// - recovery-hold recognition
+// - recovery-condition recognition
+// - recovery-review recognition
+// - return-to-service eligibility declaration
 //
 // Does not own:
 //
-// - X-Hard Break detection
-// - RED X surface
+// - Hard X recognition
+// - VR gesture recognition
 // - DD recognition
-// - break diagnosis
-// - hazard diagnosis
-// - hostile diagnosis
-// - camera diagnosis
-// - audio diagnosis
-// - drone diagnosis
-// - sync diagnosis
+// - failure diagnosis
+// - scope classification
+// - POINT reset
+// - COMPONENT reset
+// - BROADCAST reset
+// - point isolation
+// - component isolation
+// - full unplug
 // - repair
+// - relink
+// - restart
 // - object resolution
 // - uIDL resolution
 // - lane resolution
@@ -80,9 +104,7 @@
 // - transaction resolution
 // - tracking resolution
 // - integrity evaluation
-// - Comptroller crossing decision
-// - boundary decision validation
-// - reset execution
+// - Comptroller traffic direction
 // - Secretary authorization
 // - Octopus movement
 // - receipt generation
@@ -90,6 +112,19 @@
 // - archive mutation
 // - ledger mutation
 // - HTML
+//
+// HARBOUR MASTER RULE:
+//
+// Comptroller may observe that recovery
+// conditions have been satisfied.
+//
+// Observation does not create authority.
+//
+// Approval here means only:
+//
+// "This held traffic state has satisfied the
+// declared recovery conditions required to
+// proceed to the next separate recovery seam."
 //
 // NO AUTHORITY BLEED:
 //
@@ -99,37 +134,44 @@
 // NO STATE BLEED:
 //
 // Approval applies only to the declared
-// active break presented to this resolver.
+// recovery hold presented to this resolver.
 //
 // BLAST-RADIUS RULE:
 //
 // Failure of return-to-service review keeps
-// this break stopped.
+// only this declared recovery hold from
+// progressing.
 //
-// It does not affect unrelated movements.
+// It does not affect unrelated points,
+// components, links, sessions, lanes,
+// broadcasts, or fields.
+//
 
 export function resolveReturnToService(input) {
   if (!input || typeof input !== "object") {
     return {
       ok: false,
       returnToServiceApproved: null,
+      recoveryHoldActive: null,
       reason: "RETURN_TO_SERVICE_INPUT_REQUIRED"
     };
   }
 
-  if (typeof input.xHardBreakActive !== "boolean") {
+  if (typeof input.recoveryHoldActive !== "boolean") {
     return {
       ok: false,
       returnToServiceApproved: null,
-      reason: "RETURN_TO_SERVICE_X_BREAK_STATE_REQUIRED"
+      recoveryHoldActive: null,
+      reason: "RETURN_TO_SERVICE_RECOVERY_HOLD_STATE_REQUIRED"
     };
   }
 
-  if (input.xHardBreakActive !== true) {
+  if (input.recoveryHoldActive !== true) {
     return {
       ok: true,
       returnToServiceApproved: false,
-      reason: "RETURN_TO_SERVICE_NO_ACTIVE_X_BREAK"
+      recoveryHoldActive: false,
+      reason: "RETURN_TO_SERVICE_NO_ACTIVE_RECOVERY_HOLD"
     };
   }
 
@@ -137,6 +179,7 @@ export function resolveReturnToService(input) {
     return {
       ok: false,
       returnToServiceApproved: null,
+      recoveryHoldActive: true,
       reason: "RETURN_TO_SERVICE_DD_RESULT_REQUIRED"
     };
   }
@@ -145,6 +188,7 @@ export function resolveReturnToService(input) {
     return {
       ok: true,
       returnToServiceApproved: false,
+      recoveryHoldActive: true,
       reason: "RETURN_TO_SERVICE_DD_NOT_REQUESTED"
     };
   }
@@ -153,7 +197,8 @@ export function resolveReturnToService(input) {
     return {
       ok: false,
       returnToServiceApproved: null,
-      reason: "RETURN_TO_SERVICE_BREAK_CAUSE_RESULT_REQUIRED"
+      recoveryHoldActive: true,
+      reason: "RETURN_TO_SERVICE_CAUSE_RESULT_REQUIRED"
     };
   }
 
@@ -161,7 +206,8 @@ export function resolveReturnToService(input) {
     return {
       ok: true,
       returnToServiceApproved: false,
-      reason: "RETURN_TO_SERVICE_BREAK_CAUSE_NOT_CLEARED"
+      recoveryHoldActive: true,
+      reason: "RETURN_TO_SERVICE_CAUSE_NOT_CLEARED"
     };
   }
 
@@ -169,6 +215,7 @@ export function resolveReturnToService(input) {
     return {
       ok: false,
       returnToServiceApproved: null,
+      recoveryHoldActive: true,
       reason: "RETURN_TO_SERVICE_RECOVERY_REVIEW_REQUIRED"
     };
   }
@@ -177,6 +224,7 @@ export function resolveReturnToService(input) {
     return {
       ok: true,
       returnToServiceApproved: false,
+      recoveryHoldActive: true,
       reason: "RETURN_TO_SERVICE_RECOVERY_REVIEW_FAILED"
     };
   }
@@ -184,6 +232,7 @@ export function resolveReturnToService(input) {
   return {
     ok: true,
     returnToServiceApproved: true,
+    recoveryHoldActive: true,
     reason: "RETURN_TO_SERVICE_APPROVED"
   };
 }

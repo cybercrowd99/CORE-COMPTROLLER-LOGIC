@@ -13,33 +13,52 @@
 // PURPOSE:
 //
 // Complete one already-approved governed RESET
-// and declare that the active X-Hard Break
-// may be cleared from the live movement state.
+// for one declared recovery hold.
 //
-// It answers only:
+// This file answers only:
 //
-// "Has Comptroller already approved RESET
-// for this declared break?"
+// "Have the declared governed reset conditions
+// for this one recovery hold been completed?"
 //
 // RESET COMPLETION REQUIRES:
 //
-// - an active X-Hard Break
+// - an active recovery hold
 // - an approved return-to-service result
-// - an already-resolved Comptroller decision of RESET
+// - an already-resolved decision of RESET
 //
 // IMPORTANT:
 //
-// This resolver does NOT decide whether reset
-// should be approved.
+// HARD X IS NOT REQUIRED.
 //
-// That decision belongs upstream.
+// Hard X belongs to the separate VR gesture
+// safety path.
 //
-// This resolver only recognizes the completed
-// governed conditions and declares:
+// General reset completion must not create,
+// clear, or neutralize VR Hard X state.
 //
-// - active break may be cleared
-// - boundary returns to neutral X
-// - movement history remains preserved
+// Recovery holds may originate from:
+//
+// - POINT
+// - COMPONENT
+// - BROADCAST
+//
+// This resolver does not determine scope.
+//
+// POINT != COMPONENT
+//
+// COMPONENT != BROADCAST
+//
+// RESET COMPLETION != RELINK
+//
+// RESET COMPLETION != RESTART
+//
+// RESET COMPLETION != RETURN TO SERVICE
+//
+// RESET COMPLETION != AUTHORIZATION
+//
+// DD != RESET
+//
+// RETURN-TO-SERVICE APPROVAL != RESET
 //
 // RESET != ERASE HISTORY
 //
@@ -47,26 +66,39 @@
 //
 // RESET != DESTROY
 //
-// DD != RESET
+// This resolver does NOT decide whether reset
+// should be approved.
 //
-// RETURN-TO-SERVICE APPROVAL != RESET
+// That decision belongs upstream.
 //
-// X MARKS THIS BREAK.
+// This resolver only recognizes the completed
+// governed reset conditions and declares:
+//
+// - resetCompleted = true
+// - clearRecoveryHold = true
+//
+// and then ends.
 //
 // Owns only:
 //
-// - reset completion recognition
-// - active-break clear declaration
-// - neutral X return declaration
+// - reset-completion recognition
+// - recovery-hold clear declaration
 //
 // Does not own:
 //
-// - X-Hard Break detection
-// - RED X surface
+// - Hard X recognition
+// - VR gesture recognition
 // - DD recognition
-// - break diagnosis
+// - failure diagnosis
 // - recovery review
 // - return-to-service approval
+// - scope classification
+// - POINT reset execution
+// - COMPONENT reset execution
+// - BROADCAST reset execution
+// - relink
+// - restart
+// - movement authorization
 // - object resolution
 // - uIDL resolution
 // - lane resolution
@@ -79,8 +111,7 @@
 // - transaction resolution
 // - tracking resolution
 // - integrity evaluation
-// - Comptroller crossing decision
-// - boundary decision validation
+// - Comptroller traffic direction
 // - Secretary authorization
 // - Octopus movement
 // - financial movement
@@ -90,49 +121,64 @@
 // - ledger mutation
 // - HTML
 //
+// HARBOUR MASTER RULE:
+//
+// Comptroller observes that the declared
+// recovery hold has completed the governed
+// reset conditions.
+//
+// Completion does not create a new movement.
+//
+// Completion does not authorize another organ.
+//
 // NO AUTHORITY BLEED:
 //
 // Reset completion gains no authority from
-// the originating break or recovery organ.
+// the originating recovery or review organs.
 //
 // NO STATE BLEED:
 //
 // Completion applies only to the declared
-// break presented to this resolver.
+// recovery hold presented to this resolver.
 //
 // BLAST-RADIUS RULE:
 //
-// Reset completion changes only the active
-// break state of this declared movement.
+// Reset completion clears only this declared
+// recovery hold.
+//
+// It does not affect unrelated points,
+// components, links, sessions, lanes,
+// broadcasts, or fields.
+//
 
 export function resolveResetCompletion(input) {
   if (!input || typeof input !== "object") {
     return {
       ok: false,
       resetCompleted: null,
-      clearActiveBreak: null,
-      neutralX: null,
+      clearRecoveryHold: null,
+      recoveryHoldActive: null,
       reason: "RESET_COMPLETION_INPUT_REQUIRED"
     };
   }
 
-  if (typeof input.xHardBreakActive !== "boolean") {
+  if (typeof input.recoveryHoldActive !== "boolean") {
     return {
       ok: false,
       resetCompleted: null,
-      clearActiveBreak: null,
-      neutralX: null,
-      reason: "RESET_COMPLETION_X_BREAK_STATE_REQUIRED"
+      clearRecoveryHold: null,
+      recoveryHoldActive: null,
+      reason: "RESET_COMPLETION_RECOVERY_HOLD_STATE_REQUIRED"
     };
   }
 
-  if (input.xHardBreakActive !== true) {
+  if (input.recoveryHoldActive !== true) {
     return {
       ok: true,
       resetCompleted: false,
-      clearActiveBreak: false,
-      neutralX: true,
-      reason: "RESET_COMPLETION_NO_ACTIVE_BREAK"
+      clearRecoveryHold: false,
+      recoveryHoldActive: false,
+      reason: "RESET_COMPLETION_NO_ACTIVE_RECOVERY_HOLD"
     };
   }
 
@@ -140,8 +186,8 @@ export function resolveResetCompletion(input) {
     return {
       ok: false,
       resetCompleted: null,
-      clearActiveBreak: null,
-      neutralX: null,
+      clearRecoveryHold: null,
+      recoveryHoldActive: true,
       reason: "RESET_COMPLETION_RETURN_TO_SERVICE_RESULT_REQUIRED"
     };
   }
@@ -150,8 +196,8 @@ export function resolveResetCompletion(input) {
     return {
       ok: true,
       resetCompleted: false,
-      clearActiveBreak: false,
-      neutralX: false,
+      clearRecoveryHold: false,
+      recoveryHoldActive: true,
       reason: "RESET_COMPLETION_RETURN_TO_SERVICE_NOT_APPROVED"
     };
   }
@@ -165,8 +211,8 @@ export function resolveResetCompletion(input) {
     return {
       ok: false,
       resetCompleted: null,
-      clearActiveBreak: null,
-      neutralX: null,
+      clearRecoveryHold: null,
+      recoveryHoldActive: true,
       reason: "RESET_COMPLETION_DECISION_REQUIRED"
     };
   }
@@ -175,17 +221,17 @@ export function resolveResetCompletion(input) {
     return {
       ok: true,
       resetCompleted: false,
-      clearActiveBreak: false,
-      neutralX: false,
-      reason: "RESET_COMPLETION_RESET_NOT_AUTHORIZED"
+      clearRecoveryHold: false,
+      recoveryHoldActive: true,
+      reason: "RESET_COMPLETION_RESET_NOT_RESOLVED"
     };
   }
 
   return {
     ok: true,
     resetCompleted: true,
-    clearActiveBreak: true,
-    neutralX: true,
+    clearRecoveryHold: true,
+    recoveryHoldActive: true,
     reason: "RESET_COMPLETION_RESOLVED"
   };
 }

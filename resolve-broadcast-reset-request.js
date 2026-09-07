@@ -12,56 +12,87 @@
 //
 // PURPOSE:
 //
-// Recognize one escalation request produced after
-// a failed Turnstile link-reverify test.
+// Recognize only an explicitly declared
+// BROADCAST-scope escalation request.
 //
 // This file answers only:
 //
-// "Did this failed local link-reverify result
-// require escalation into the separate
-// broadcast-reset path?"
-//
-// BROADCAST RESET REQUEST:
-//
-// - begins only from an already-resolved
-//   local link-reverify result
-// - recognizes escalationRequired = true
-// - declares broadcastResetRequested = true
-// - ends there
+// "Has the already-classified escalation
+// explicitly reached BROADCAST scope?"
 //
 // IMPORTANT:
 //
+// escalationRequired = true
+//
+// does NOT mean:
+//
+// broadcastResetRequested = true
+//
+// A failed point may remain a POINT failure.
+//
+// A failed broadcast component may remain a
+// COMPONENT failure.
+//
+// Only an already-declared BROADCAST scope
+// may enter the broadcast-reset path.
+//
+// SCOPE ORDER:
+//
+// POINT
+// COMPONENT
+// BROADCAST
+//
+// Smaller scopes do not automatically widen.
+//
+// BROADCAST RESET REQUEST REQUIRES:
+//
+// - escalationRequired = true
+// - escalationScope = "BROADCAST"
+//
+// When both are true:
+//
+// - broadcastResetRequested = true
+//
+// and this resolver ends.
+//
 // This file does NOT:
 //
+// - determine the escalation scope
+// - promote POINT to COMPONENT
+// - promote COMPONENT to BROADCAST
+// - perform point reset
+// - perform component reset
 // - perform broadcast reset
 // - perform full unplug
 // - sever links
 // - restore links
-// - run another link-reverify test
-// - diagnose why the link failed
+// - diagnose failure
 // - authorize movement
 // - stop unrelated traffic
 // - erase history
 // - erase DD history
-// - erase the original break
-//
-// A broadcast-reset request is not the
-// broadcast reset itself.
 //
 // REQUEST != EXECUTION
 //
+// SCOPE != AUTHORITY
+//
+// ESCALATION != BROADCAST
+//
 // Owns only:
 //
-// - escalation-request recognition
+// - recognition of explicit BROADCAST scope
 // - broadcast-reset-request declaration
 //
 // Does not own:
 //
 // - DD recognition
-// - X-Hard Break detection
-// - RED X display
-// - link-reverify execution
-// - link restoration
+// - link reverify
+// - point isolation
+// - point reset
+// - component isolation
+// - component reset
+// - scope determination
+// - scope promotion
 // - repeated-DD detection
 // - Biff questioning
 // - failure diagnosis
@@ -81,21 +112,24 @@
 //
 // NO AUTHORITY BLEED:
 //
-// Recognition of escalation does not create
-// authority to execute the broadcast reset.
+// Recognition of BROADCAST scope does not
+// authorize execution of the broadcast reset.
 //
 // NO STATE BLEED:
 //
-// This request applies only to the declared
-// failed link-reverify result presented here.
+// POINT remains POINT.
+//
+// COMPONENT remains COMPONENT.
+//
+// BROADCAST is recognized only when explicitly
+// presented as BROADCAST.
 //
 // BLAST-RADIUS RULE:
 //
-// This file does not unplug or alter any
-// additional links.
+// This resolver must never widen failure scope.
 //
-// It only declares that the separate
-// broadcast-reset path must be requested.
+// It only recognizes a scope decision that
+// already exists upstream.
 //
 
 export function resolveBroadcastResetRequest(input) {
@@ -104,6 +138,7 @@ export function resolveBroadcastResetRequest(input) {
       ok: false,
       broadcastResetRequested: null,
       escalationRequired: null,
+      escalationScope: null,
       reason: "BROADCAST_RESET_REQUEST_INPUT_REQUIRED"
     };
   }
@@ -113,6 +148,7 @@ export function resolveBroadcastResetRequest(input) {
       ok: false,
       broadcastResetRequested: null,
       escalationRequired: null,
+      escalationScope: null,
       reason: "BROADCAST_RESET_REQUEST_ESCALATION_RESULT_REQUIRED"
     };
   }
@@ -122,7 +158,47 @@ export function resolveBroadcastResetRequest(input) {
       ok: true,
       broadcastResetRequested: false,
       escalationRequired: false,
+      escalationScope: null,
       reason: "BROADCAST_RESET_REQUEST_NOT_REQUIRED"
+    };
+  }
+
+  const escalationScope =
+    typeof input.escalationScope === "string"
+      ? input.escalationScope.trim().toUpperCase()
+      : "";
+
+  if (!escalationScope) {
+    return {
+      ok: false,
+      broadcastResetRequested: null,
+      escalationRequired: true,
+      escalationScope: null,
+      reason: "BROADCAST_RESET_REQUEST_SCOPE_REQUIRED"
+    };
+  }
+
+  if (
+    escalationScope !== "POINT" &&
+    escalationScope !== "COMPONENT" &&
+    escalationScope !== "BROADCAST"
+  ) {
+    return {
+      ok: false,
+      broadcastResetRequested: null,
+      escalationRequired: true,
+      escalationScope,
+      reason: "BROADCAST_RESET_REQUEST_SCOPE_INVALID"
+    };
+  }
+
+  if (escalationScope !== "BROADCAST") {
+    return {
+      ok: true,
+      broadcastResetRequested: false,
+      escalationRequired: true,
+      escalationScope,
+      reason: "BROADCAST_RESET_REQUEST_SCOPE_NOT_BROADCAST"
     };
   }
 
@@ -130,6 +206,7 @@ export function resolveBroadcastResetRequest(input) {
     ok: true,
     broadcastResetRequested: true,
     escalationRequired: true,
+    escalationScope: "BROADCAST",
     reason: "BROADCAST_RESET_REQUEST_RESOLVED"
   };
 }

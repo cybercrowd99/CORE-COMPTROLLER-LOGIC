@@ -21,25 +21,52 @@
 // re-establish itself during the short reverify test?"
 //
 // LINK REVERIFY:
+//
 // - applies to one declared broken link
 // - requires a recognized DD reset request
 // - receives one completed short-test result
 // - declares whether that one link was restored
-// - declares whether escalation is required
+// - declares whether further containment handling
+//   is required
 //
 // PASS:
 //
 // - link restored
-// - no broadcast reset required from this result
+// - escalationRequired = false
 //
 // FAIL:
 //
 // - link not restored
-// - escalation required
+// - escalationRequired = true
 //
 // IMPORTANT:
 //
+// escalationRequired = true
+//
+// does NOT mean:
+//
+// - POINT reset
+// - COMPONENT reset
+// - BROADCAST reset
+//
+// This resolver does not determine scope.
+//
+// Scope belongs to a separate classification
+// boundary after this resolver ends.
+//
+// POINT != COMPONENT
+//
+// COMPONENT != BROADCAST
+//
+// FAILURE != BROADCAST FAILURE
+//
 // Link reverify does NOT perform escalation.
+//
+// Link reverify does NOT determine escalation scope.
+//
+// Link reverify does NOT perform point reset.
+//
+// Link reverify does NOT perform component reset.
 //
 // Link reverify does NOT perform broadcast reset.
 //
@@ -49,12 +76,7 @@
 //
 // Link reverify does NOT diagnose why the link failed.
 //
-// Link reverify does NOT erase the break record.
-//
 // Link reverify does NOT erase DD history.
-//
-// One failed reverify result may be handed to the
-// separate broadcast-reset path.
 //
 // Owns only:
 //
@@ -65,8 +87,13 @@
 // Does not own:
 //
 // - DD recognition
-// - X-Hard Break creation
-// - RED X display
+// - scope classification
+// - point isolation
+// - point reset
+// - component isolation
+// - component reset
+// - broadcast reset
+// - full unplug
 // - repeated-DD pattern detection
 // - Biff questioning
 // - failure diagnosis
@@ -78,8 +105,6 @@
 // - DECchamber evidence storage
 // - Flight Control
 // - CASE Health
-// - broadcast reset
-// - full unplug
 // - archive mutation
 // - ledger mutation
 // - HTML
@@ -87,6 +112,7 @@
 // NO AUTHORITY BLEED:
 //
 // Successful relink does not create authority.
+//
 // It only reports that the declared link
 // successfully re-established.
 //
@@ -97,10 +123,16 @@
 //
 // BLAST-RADIUS RULE:
 //
-// A failed link reverify ends here with
-// escalationRequired = true.
+// A failed link reverify ends here with:
 //
-// This file does not touch unrelated links.
+// escalationRequired = true
+//
+// It does not determine how far the failure
+// may propagate.
+//
+// It does not touch unrelated links.
+//
+// It does not widen the affected scope.
 //
 // Recognized short-test results:
 //
